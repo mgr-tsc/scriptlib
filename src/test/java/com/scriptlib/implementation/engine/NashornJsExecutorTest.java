@@ -36,7 +36,7 @@ public class NashornJsExecutorTest {
         JsContext context = new JsContext();
         context.addBinding("greeting", "Hello from Java");
         Object result = jsExecutor.executeScript("greeting + ' in script';", context);
-        assertEquals("Hello from Java in script", (String)result);
+        assertEquals("Hello from Java in script", result);
     }
 
     @Test
@@ -71,4 +71,26 @@ public class NashornJsExecutorTest {
         Object result = jsExecutor.executeScript(script, context);
         assertEquals("Binding Success: Java Value", result);
     }
+
+    @Test
+    void bindingsWithJsonObjects() throws ScriptLibExecutionException {
+        String jsonObjectInvoice = "{\n" +
+                "    \"invoiceNumber\": \"INV-123\",\n" +
+                "    \"totalAmount\": 100.0\n" +
+                "}";
+        JsScript script = new Script("complexBindingTestScript", "Complex Binding Test Script",
+                "(function () {\n" +
+                        "    if (complexObject.totalAmount > 99.00) {\n" +
+                        "        var newAmount = complexObject.totalAmount - 25;\n" +
+                        "        return 'modification success, new amount is: ' + newAmount \n" +
+                        "    } else {\n" +
+                        "        return 'Binding Failed';\n" +
+                        "    }\n" +
+                        "})();");
+        JsContext context = new JsContext();
+        context.addBinding("complexObject", jsonObjectInvoice);
+        Object result = jsExecutor.executeScript(script, context);
+        assertTrue(result.toString().contains("modification success, new amount is"));
+    }
+
 }

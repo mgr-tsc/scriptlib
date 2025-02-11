@@ -6,10 +6,10 @@ import java.util.Objects;
 
 public class Script implements JsScript {
 
-    private final String scriptId;
-    private final String scriptName;
-    private final String scriptContent;
-    private final Map<String, Object> metadata; // For future use
+    protected final String scriptId;
+    protected final String scriptName;
+    protected final String scriptContent;
+    protected final Map<String, Object> metadata; // For future use
 
     public Script(String scriptId, String scriptName, String scriptContent, Map<String, Object> metadata) {
         this.scriptId = scriptId;
