@@ -1,6 +1,6 @@
 package com.scriptlib.core;
 
-public class PreprocessingExecutor implements ScriptPreprocessor {
+public class IIEFPreprocessingExecutor implements ScriptPreprocessor {
     @Override
     public String preprocess(String scriptContent) {
         return "(function(){" + scriptContent + "})();";
