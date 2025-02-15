@@ -3,16 +3,20 @@ package com.scriptlib.implementation.engine;
 
 import com.scriptlib.core.*;
 import com.scriptlib.core.exceptions.ScriptLibExecutionException;
+import com.scriptlib.implementation.preprocessors.JsonPayloadPreprocessor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.Assert.assertThrows;
+
+import javax.script.ScriptException;
+
+import static org.junit.Assert.*;
 
 public class JsExecutorTest {
     private JsExecutor jsExecutor;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws ScriptException {
         jsExecutor = new JsExecutor(); // Using default constructor (with IIFE Preprocessor)
     }
 
@@ -65,7 +69,7 @@ public class JsExecutorTest {
     }
 
     @Test
-    void executeScript_WithCustomPreprocessor_NoIIFEWrapping() throws ScriptLibExecutionException {
+    void executeScript_WithCustomPreprocessor_NoIIFEWrapping() throws ScriptLibExecutionException, ScriptException {
         // Create a No-Op preprocessor
         ScriptPreprocessor noOpPreprocessor = scriptCode -> scriptCode;
 
@@ -79,7 +83,7 @@ public class JsExecutorTest {
     }
 
     @Test
-    void executeScript_WithCustomPreprocessor_ModifiedScript() throws ScriptLibExecutionException {
+    void executeScript_WithCustomPreprocessor_ModifiedScript() throws ScriptLibExecutionException, ScriptException {
         // Create a preprocessor that adds a comment to the script
         ScriptPreprocessor commentPreprocessor = scriptCode -> "// Script was preprocessed!\n" + scriptCode;
 
@@ -90,5 +94,38 @@ public class JsExecutorTest {
 
         Object result = executorWithCommentPreprocessor.executeScript(script);
         Assertions.assertEquals("comment test", result); // Should still execute, comment is added but doesn't affect result
+    }
+
+    @Test
+    void executeScriptFunction_WithPreprocessor() throws ScriptLibExecutionException, ScriptException {
+        // Create SimpleIIFEExecutor with the comment preprocessor
+        JsScriptExecutor executor = new JsExecutor();
+        JsScript script = new Script("test", "Script with function call", "function testFunction() { return new Date().toString(); } return testFunction();");
+        Object result = executor.executeScript(script);
+        System.out.println("Result: " + result);
+        Assertions.assertTrue(result != null); // Should still execute, comment is added but doesn't affect result
+    }
+
+    @Test
+    void executeScriptFunction_WithPayloadBinding() throws ScriptLibExecutionException, ScriptException {
+        // Create SimpleIIFEExecutor with the comment preprocessor
+        JsonPayloadPreprocessor preprocessor = new JsonPayloadPreprocessor();
+        JsScriptExecutor executor = new JsExecutor(preprocessor);
+        JsContext context = new JsContext();
+        context.addBinding("payload", "{\"finalAmount\": 149.67, \"note\": \"credit\"}");
+        JsScript script = new Script("test", "Script with function call", "function testFunction() { " +
+                "if (payload.finalAmount > 0 && payload.note === 'credit')" +
+                " { print('testFunction returning true'); return true;}" + // Log before return true
+                " print('testFunction returning false'); return false;" +  // Log before return false
+                "} " +
+                "return testFunction();");
+        String preprocessedCode; // Capture preprocessed code
+
+        // Check if preprocessor supports context-aware preprocessing
+        preprocessedCode = ((JsonPayloadPreprocessor) preprocessor).preprocess(script.getJsCode(), context); // Call preprocess with context
+        System.out.println("\nPreprocessed Script Code:\n--------------------\n" + preprocessedCode + "\n--------------------\n"); // Print preprocessed code
+        Object result = executor.executeScript(script, context);
+        System.out.println("Result: " + result);
+        Assertions.assertTrue((Boolean) result);
     }
 }

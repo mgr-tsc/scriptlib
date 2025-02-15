@@ -23,6 +23,11 @@ public class SimpleNashornJsExecutor implements JsScriptExecutor {
     }
 
     @Override
+    public boolean isContextAware() {
+        return false;
+    }
+
+    @Override
     public Object executeScript(JsScript script) throws ScriptLibExecutionException {
         return executeScript(script, new JsContext()); // Execute with a default empty context
     }
